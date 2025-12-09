@@ -2,13 +2,17 @@ import { Link } from "react-router-dom";
 import { useCartStore } from "../stores/useCartStore";
 import { motion } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
+import { useState } from "react";
 import CartItem from "../components/CartItem";
 import PeopleAlsoBought from "../components/PeopleAlsoBought";
 import OrderSummary from "../components/OrderSummary";
 import GiftCouponCard from "../components/GiftCouponCard";
+import AddressForm from "../components/AddressForm";
 
 const CartPage = () => {
 	const { cart } = useCartStore();
+	const [shippingAddress, setShippingAddress] = useState(null);
+	const [showAddressForm, setShowAddressForm] = useState(false);
 
 	return (
 		<div className='py-8 md:py-16'>
@@ -39,7 +43,40 @@ const CartPage = () => {
 							animate={{ opacity: 1, x: 0 }}
 							transition={{ duration: 0.5, delay: 0.4 }}
 						>
-							<OrderSummary />
+							{/* Address Section */}
+							{!showAddressForm ? (
+								<div className='bg-gray-800 border border-gray-700 rounded-lg p-4'>
+									<h3 className='text-lg font-semibold text-white mb-4'>Shipping Address</h3>
+									{shippingAddress ? (
+										<div className='text-gray-300 mb-4'>
+											<p>{shippingAddress.street}</p>
+											<p>{shippingAddress.city}, {shippingAddress.state} {shippingAddress.postalCode}</p>
+											<p>{shippingAddress.country}</p>
+											<p className='text-sm mt-2'>Phone: {shippingAddress.phone}</p>
+										</div>
+									) : (
+										<p className='text-gray-400 mb-4'>No address selected</p>
+									)}
+									<button
+										onClick={() => setShowAddressForm(true)}
+										className='w-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md transition'
+									>
+										{shippingAddress ? "Change Address" : "Add Address"}
+									</button>
+								</div>
+							) : (
+								<div className='bg-gray-800 border border-gray-700 rounded-lg p-4'>
+									<AddressForm
+										onSave={(address) => {
+											setShippingAddress(address);
+											setShowAddressForm(false);
+										}}
+										onCancel={() => setShowAddressForm(false)}
+									/>
+								</div>
+							)}
+
+							<OrderSummary shippingAddress={shippingAddress} />
 							<GiftCouponCard />
 						</motion.div>
 					)}

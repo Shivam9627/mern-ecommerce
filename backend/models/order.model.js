@@ -35,6 +35,19 @@ const orderSchema = new mongoose.Schema(
 			type: String,
 			unique: true,
 		},
+		status: {
+			type: String,
+			enum: ["pending", "shipped", "on-the-way", "delivered"],
+			default: "pending",
+		},
+		shippingAddress: {
+			street: String,
+			city: String,
+			state: String,
+			postalCode: String,
+			country: String,
+			phone: String,
+		},
 	},
 	{ timestamps: true }
 );

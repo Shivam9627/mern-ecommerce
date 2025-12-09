@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import CategoryItem from "../components/CategoryItem";
 import { useProductStore } from "../stores/useProductStore";
+import { useFavoritesStore } from "../stores/useFavoritesStore";
 import FeaturedProducts from "../components/FeaturedProducts";
 
 const categories = [
@@ -15,10 +16,12 @@ const categories = [
 
 const HomePage = () => {
 	const { fetchFeaturedProducts, products, isLoading } = useProductStore();
+	const { fetchFavorites } = useFavoritesStore();
 
 	useEffect(() => {
 		fetchFeaturedProducts();
-	}, [fetchFeaturedProducts]);
+		fetchFavorites();
+	}, [fetchFeaturedProducts, fetchFavorites]);
 
 	return (
 		<div className='relative min-h-screen text-white overflow-hidden'>

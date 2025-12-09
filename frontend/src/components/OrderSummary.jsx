@@ -5,11 +5,10 @@ import { MoveRight } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import axios from "../lib/axios";
 
-const stripePromise = loadStripe(
-	"pk_test_51KZYccCoOZF2UhtOwdXQl3vcizup20zqKqT9hVUIsVzsdBrhqbUI2fE0ZdEVLdZfeHjeyFXtqaNsyCJCmZWnjNZa00PzMAjlcL"
-);
+const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY || "";
+const stripePromise = STRIPE_PUBLIC_KEY ? loadStripe(STRIPE_PUBLIC_KEY) : null;
 
-const OrderSummary = () => {
+const OrderSummary = ({ shippingAddress }) => {
 	const { total, subtotal, coupon, isCouponApplied, cart } = useCartStore();
 
 	const savings = subtotal - total;
@@ -18,19 +17,42 @@ const OrderSummary = () => {
 	const formattedSavings = savings.toFixed(2);
 
 	const handlePayment = async () => {
-		const stripe = await stripePromise;
-		const res = await axios.post("/payments/create-checkout-session", {
-			products: cart,
-			couponCode: coupon ? coupon.code : null,
-		});
+		if (!shippingAddress) {
+			alert("Please add a shipping address before checkout");
+			return;
+		}
 
-		const session = res.data;
-		const result = await stripe.redirectToCheckout({
-			sessionId: session.id,
-		});
+		if (!STRIPE_PUBLIC_KEY) {
+			console.error("Missing Stripe publishable key. Set VITE_STRIPE_PUBLIC_KEY in frontend/.env");
+			return;
+		}
 
-		if (result.error) {
-			console.error("Error:", result.error);
+		try {
+			const stripe = await stripePromise;
+			if (!stripe) {
+				console.error("Failed to initialize Stripe");
+				return;
+			}
+
+			const res = await axios.post("/payments/create-checkout-session", {
+				products: cart,
+				couponCode: coupon ? coupon.code : null,
+				shippingAddress,
+			});
+
+			if (!res || !res.data || !res.data.id) {
+				console.error("Invalid checkout session response", res);
+				return;
+			}
+
+			const session = res.data;
+			const result = await stripe.redirectToCheckout({ sessionId: session.id });
+
+			if (result && result.error) {
+				console.error("Stripe redirect error:", result.error);
+			}
+		} catch (err) {
+			console.error("Checkout error:", err);
 		}
 	};
 

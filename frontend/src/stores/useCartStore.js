@@ -44,20 +44,27 @@ export const useCartStore = create((set, get) => ({
 		}
 	},
 	clearCart: async () => {
-		set({ cart: [], coupon: null, total: 0, subtotal: 0 });
+		try {
+			await axios.delete("/cart");
+			set({ cart: [], coupon: null, total: 0, subtotal: 0 });
+		} catch (error) {
+			console.error("Error clearing cart:", error);
+			set({ cart: [], coupon: null, total: 0, subtotal: 0 });
+		}
 	},
 	addToCart: async (product) => {
 		try {
-			await axios.post("/cart", { productId: product._id });
+			const quantity = product.quantity || 1;
+			await axios.post("/cart", { productId: product._id, quantity });
 			toast.success("Product added to cart");
 
 			set((prevState) => {
 				const existingItem = prevState.cart.find((item) => item._id === product._id);
 				const newCart = existingItem
 					? prevState.cart.map((item) =>
-							item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item
+							item._id === product._id ? { ...item, quantity: item.quantity + quantity } : item
 					  )
-					: [...prevState.cart, { ...product, quantity: 1 }];
+					: [...prevState.cart, { ...product, quantity: quantity }];
 				return { cart: newCart };
 			});
 			get().calculateTotals();

@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle, HandHeart } from "lucide-react";
+import { ArrowRight, CheckCircle, Package } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCartStore } from "../stores/useCartStore";
@@ -16,7 +16,7 @@ const PurchaseSuccessPage = () => {
 				await axios.post("/payments/checkout-success", {
 					sessionId,
 				});
-				clearCart();
+				await clearCart();
 			} catch (error) {
 				console.log(error);
 			} finally {
@@ -65,8 +65,8 @@ const PurchaseSuccessPage = () => {
 					</p>
 					<div className='bg-gray-700 rounded-lg p-4 mb-6'>
 						<div className='flex items-center justify-between mb-2'>
-							<span className='text-sm text-gray-400'>Order number</span>
-							<span className='text-sm font-semibold text-emerald-400'>#12345</span>
+							<span className='text-sm text-gray-400'>Order Status</span>
+							<span className='text-sm font-semibold text-emerald-400'>Pending</span>
 						</div>
 						<div className='flex items-center justify-between'>
 							<span className='text-sm text-gray-400'>Estimated delivery</span>
@@ -75,13 +75,14 @@ const PurchaseSuccessPage = () => {
 					</div>
 
 					<div className='space-y-4'>
-						<button
+						<Link
+							to={"/my-orders"}
 							className='w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4
              rounded-lg transition duration-300 flex items-center justify-center'
 						>
-							<HandHeart className='mr-2' size={18} />
-							Thanks for trusting us!
-						</button>
+							<Package className='mr-2' size={18} />
+							View Your Order
+						</Link>
 						<Link
 							to={"/"}
 							className='w-full bg-gray-700 hover:bg-gray-600 text-emerald-400 font-bold py-2 px-4 

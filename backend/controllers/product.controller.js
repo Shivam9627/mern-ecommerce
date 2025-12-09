@@ -5,7 +5,12 @@ import Product from "../models/product.model.js";
 export const getAllProducts = async (req, res) => {
 	try {
 		const products = await Product.find({}); // find all products
-		res.json({ products });
+		// Ensure all products have stock field
+		const productsWithStock = products.map(p => ({
+			...p.toObject(),
+			stock: p.stock !== undefined ? p.stock : 100
+		}));
+		res.json({ products: productsWithStock });
 	} catch (error) {
 		const msg = error && error.message ? error.message : String(error);
 		console.log("Error in getAllProducts controller", msg);
@@ -20,7 +25,13 @@ export const getFeaturedProducts = async (req, res) => {
 			// Upstash may return an empty string or already-parsed value; safely handle parsing
 			try {
 				if (typeof featuredProducts === "string" && featuredProducts.length > 0) {
-					return res.json(JSON.parse(featuredProducts));
+					const cached = JSON.parse(featuredProducts);
+					// Ensure all products have stock field (for backward compatibility)
+					const withStock = cached.map(p => ({
+						...p,
+						stock: p.stock !== undefined ? p.stock : 100
+					}));
+					return res.json(withStock);
 				}
 				return res.json(featuredProducts);
 			} catch (e) {
@@ -37,11 +48,16 @@ export const getFeaturedProducts = async (req, res) => {
 			return res.status(404).json({ message: "No featured products found" });
 		}
 
+		// Ensure all products have stock field
+		const productsWithStock = featuredProducts.map(p => ({
+			...p,
+			stock: p.stock !== undefined ? p.stock : 100
+		}));
+
 		// store in redis for future quick access
+		await redis.set("featured_products", JSON.stringify(productsWithStock));
 
-		await redis.set("featured_products", JSON.stringify(featuredProducts));
-
-		res.json(featuredProducts);
+		res.json(productsWithStock);
 	} catch (error) {
 		const msg = error && error.message ? error.message : String(error);
 		console.log("Error in getFeaturedProducts controller", msg);
@@ -132,7 +148,12 @@ export const getProductsByCategory = async (req, res) => {
 	const { category } = req.params;
 	try {
 		const products = await Product.find({ category });
-		res.json({ products });
+		// Ensure all products have stock field
+		const productsWithStock = products.map(p => ({
+			...p.toObject(),
+			stock: p.stock !== undefined ? p.stock : 100
+		}));
+		res.json({ products: productsWithStock });
 	} catch (error) {
 		const msg = error && error.message ? error.message : String(error);
 		console.log("Error in getProductsByCategory controller", msg);
@@ -142,15 +163,25 @@ export const getProductsByCategory = async (req, res) => {
 
 export const toggleFeaturedProduct = async (req, res) => {
 	try {
+		const { stock } = req.body;
+
 		const product = await Product.findById(req.params.id);
-		if (product) {
-			product.isFeatured = !product.isFeatured;
-			const updatedProduct = await product.save();
-			await updateFeaturedProductsCache();
-			res.json(updatedProduct);
-		} else {
-			res.status(404).json({ message: "Product not found" });
+		if (!product) {
+			return res.status(404).json({ message: "Product not found" });
 		}
+
+		// If stock is in request body, update stock
+		if (stock !== undefined) {
+			product.stock = stock;
+			const updatedProduct = await product.save();
+			return res.json(updatedProduct);
+		}
+
+		// Otherwise toggle featured
+		product.isFeatured = !product.isFeatured;
+		const updatedProduct = await product.save();
+		await updateFeaturedProductsCache();
+		res.json(updatedProduct);
 	} catch (error) {
 		const msg = error && error.message ? error.message : String(error);
 		console.log("Error in toggleFeaturedProduct controller", msg);

@@ -18,12 +18,26 @@ const Navbar = () => {
 
 					<nav className='flex flex-wrap items-center gap-4'>
 						<Link
+							to={'/about'}
+							className='text-gray-300 hover:text-emerald-400 transition duration-300 ease-in-out'
+						>
+							About
+						</Link>
+						<Link
 							to={"/"}
 							className='text-gray-300 hover:text-emerald-400 transition duration-300
 					 ease-in-out'
 						>
 							Home
 						</Link>
+						{user && (
+							<Link
+								to={"/my-orders"}
+								className='text-gray-300 hover:text-emerald-400 transition duration-300 ease-in-out'
+							>
+								My Orders
+							</Link>
+						)}
 						{user && (
 							<Link
 								to={"/cart"}

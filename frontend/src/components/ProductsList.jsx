@@ -1,11 +1,22 @@
 import { motion } from "framer-motion";
 import { Trash, Star } from "lucide-react";
+import axios from "../lib/axios";
 import { useProductStore } from "../stores/useProductStore";
+import { toast } from "react-hot-toast";
 
 const ProductsList = () => {
-	const { deleteProduct, toggleFeaturedProduct, products } = useProductStore();
+	const { deleteProduct, toggleFeaturedProduct, products, fetchAllProducts } = useProductStore();
 
-	console.log("products", products);
+	const updateProductStock = async (productId, newStock) => {
+		try {
+			await axios.patch(`/products/${productId}`, { stock: newStock });
+			await fetchAllProducts();
+			toast.success("Stock updated successfully");
+		} catch (error) {
+			console.error("Error updating stock:", error);
+			toast.error("Failed to update stock");
+		}
+	};
 
 	return (
 		<motion.div
@@ -35,7 +46,6 @@ const ProductsList = () => {
 						>
 							Category
 						</th>
-
 						<th
 							scope='col'
 							className='px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider'
@@ -46,12 +56,16 @@ const ProductsList = () => {
 							scope='col'
 							className='px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider'
 						>
+							Stock
+						</th>
+						<th
+							scope='col'
+							className='px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider'
+						>
 							Actions
 						</th>
-					</tr>
-				</thead>
-
-				<tbody className='bg-gray-800 divide-y divide-gray-700'>
+				</tr>
+			</thead>				<tbody className='bg-gray-800 divide-y divide-gray-700'>
 					{products?.map((product) => (
 						<tr key={product._id} className='hover:bg-gray-700'>
 							<td className='px-6 py-4 whitespace-nowrap'>
@@ -83,6 +97,15 @@ const ProductsList = () => {
 								>
 									<Star className='h-5 w-5' />
 								</button>
+							</td>
+							<td className='px-6 py-4 whitespace-nowrap'>
+								<input
+									type='number'
+									min='0'
+									value={product.stock || 0}
+									onChange={(e) => updateProductStock(product._id, parseInt(e.target.value))}
+									className='w-16 px-2 py-1 bg-gray-700 text-white rounded border border-gray-600 focus:border-emerald-500 focus:outline-none'
+								/>
 							</td>
 							<td className='px-6 py-4 whitespace-nowrap text-sm font-medium'>
 								<button
