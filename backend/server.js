@@ -2,7 +2,6 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import path from "path";
 
 import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
@@ -20,22 +19,34 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Your frontend domain for production
-// Example: https://myshop.vercel.app
-const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+// ---------------------------------------------------------------------------
+// Allowed frontend domains
+// ---------------------------------------------------------------------------
+const allowedOrigins = [
+    "http://localhost:5173", // local dev
+    "https://mern-ecommerce-frontend-gg0c7lu19-shivam-chamolis-projects.vercel.app", // your vercel frontend
+    process.env.CLIENT_URL // optional: allow render env variable
+];
 
-// Allow CORS for frontend
+
 app.use(
-	cors({
-		origin: CLIENT_URL,
-		credentials: true, // allow cookies
-	})
+    cors({
+        origin: function (origin, callback) {
+            // allow REST tools + same-origin
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            } else {
+                callback(new Error("❌ Not allowed by CORS: " + origin));
+            }
+        },
+        credentials: true,
+    })
 );
 
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 
-// API routes
+
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
@@ -45,12 +56,8 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/favorites", favoriteRoutes);
 
-// ❌ REMOVE FRONTEND SERVING
-// Because frontend is hosted separately on Vercel, NOT in backend
-// So no need for express.static()
 
-// Start the server
 app.listen(PORT, () => {
-	console.log(`Backend server running on PORT ${PORT}`);
-	connectDB();
+    console.log(`Backend running on PORT ${PORT}`);
+    connectDB();
 });
