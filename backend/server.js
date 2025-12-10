@@ -23,18 +23,18 @@ const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 const __dirname = path.resolve();
 
+// ✅ CORS setup for production and development
 app.use(
 	cors({
 		origin: CLIENT_URL,
-		credentials: true,
-		methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-		allowedHeaders: ["Content-Type", "Authorization"],
+		credentials: true, // Allow cookies
 	})
 );
 
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 
+// API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
@@ -44,9 +44,9 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/favorites", favoriteRoutes);
 
+// ✅ Serve frontend in production
 if (process.env.NODE_ENV === "production") {
 	const buildPath = path.join(__dirname, "backend", "dist");
-
 	app.use(express.static(buildPath));
 
 	app.get("*", (req, res) => {
@@ -54,6 +54,7 @@ if (process.env.NODE_ENV === "production") {
 	});
 }
 
+// Start server
 app.listen(PORT, () => {
 	console.log("Server is running on http://localhost:" + PORT);
 	connectDB();
