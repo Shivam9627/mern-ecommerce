@@ -23,7 +23,6 @@ const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
 const __dirname = path.resolve();
 
-// CORS configuration
 app.use(
 	cors({
 		origin: CLIENT_URL,
@@ -33,7 +32,7 @@ app.use(
 	})
 );
 
-app.use(express.json({ limit: "10mb" })); // allows you to parse the body of the request
+app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
@@ -46,14 +45,14 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/favorites", favoriteRoutes);
 
 if (process.env.NODE_ENV === "production") {
-	app.use(express.static(path.join(__dirname, "dist")));
+	const buildPath = path.join(__dirname, "backend", "dist");
+
+	app.use(express.static(buildPath));
 
 	app.get("*", (req, res) => {
-		res.sendFile(path.resolve(__dirname, "dist", "index.html"));
+		res.sendFile(path.join(buildPath, "index.html"));
 	});
 }
-
-
 
 app.listen(PORT, () => {
 	console.log("Server is running on http://localhost:" + PORT);
