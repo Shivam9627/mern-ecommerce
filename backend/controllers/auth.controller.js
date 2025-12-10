@@ -31,9 +31,10 @@ const setCookies = (res, accessToken, refreshToken) => {
 
 	res.cookie("accessToken", accessToken, {
 		httpOnly: true,
-		secure: isProd,
-		sameSite: isProd ? "none" : "lax", // important for cross-domain on Render
+		secure: isProd, // true only in production
+		sameSite: isProd ? "none" : "lax", // "none" for cross-domain, "lax" for localhost
 		maxAge: 15 * 60 * 1000, // 15 minutes
+		path: "/", // important for all routes
 	});
 
 	res.cookie("refreshToken", refreshToken, {
@@ -41,6 +42,7 @@ const setCookies = (res, accessToken, refreshToken) => {
 		secure: isProd,
 		sameSite: isProd ? "none" : "lax",
 		maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+		path: "/",
 	});
 };
 
@@ -127,11 +129,13 @@ export const refreshToken = async (req, res) => {
 
 		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
 
+		const isProd = process.env.NODE_ENV === "production";
 		res.cookie("accessToken", accessToken, {
 			httpOnly: true,
-			secure: process.env.NODE_ENV === "production",
-			sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+			secure: isProd,
+			sameSite: isProd ? "none" : "lax",
 			maxAge: 15 * 60 * 1000,
+			path: "/",
 		});
 
 		res.json({ message: "Token refreshed successfully" });
