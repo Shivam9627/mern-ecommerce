@@ -1,8 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
-import path from "path";
 import cors from "cors";
+import path from "path";
 
 import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
@@ -19,15 +19,16 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Your frontend domain for production
+// Example: https://myshop.vercel.app
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
-const __dirname = path.resolve();
-
-// ✅ CORS setup for production and development
+// Allow CORS for frontend
 app.use(
 	cors({
 		origin: CLIENT_URL,
-		credentials: true, // Allow cookies
+		credentials: true, // allow cookies
 	})
 );
 
@@ -44,18 +45,12 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/favorites", favoriteRoutes);
 
-// ✅ Serve frontend in production
-if (process.env.NODE_ENV === "production") {
-	const buildPath = path.join(__dirname, "backend", "dist");
-	app.use(express.static(buildPath));
+// ❌ REMOVE FRONTEND SERVING
+// Because frontend is hosted separately on Vercel, NOT in backend
+// So no need for express.static()
 
-	app.get("*", (req, res) => {
-		res.sendFile(path.join(buildPath, "index.html"));
-	});
-}
-
-// Start server
+// Start the server
 app.listen(PORT, () => {
-	console.log("Server is running on http://localhost:" + PORT);
+	console.log(`Backend server running on PORT ${PORT}`);
 	connectDB();
 });
