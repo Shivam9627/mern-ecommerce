@@ -34,25 +34,21 @@ const OrderSummary = ({ shippingAddress }) => {
 				return;
 			}
 
-			const res = await axios.post("/payments/create-checkout-session", {
+			const res = await axios.post("/api/payments/create-checkout-session", {
 				products: cart,
 				couponCode: coupon ? coupon.code : null,
 				shippingAddress,
 			});
 
-			if (!res || !res.data || !res.data.id) {
+			if (!res || !res.data || !res.data.url) {
 				console.error("Invalid checkout session response", res);
 				return;
 			}
 
-			const session = res.data;
-			const result = await stripe.redirectToCheckout({ sessionId: session.id });
-
-			if (result && result.error) {
-				console.error("Stripe redirect error:", result.error);
-			}
+			// Redirect to Stripe checkout URL
+			window.location.href = res.data.url;
 		} catch (err) {
-			console.error("Checkout error:", err);
+			console.error("Checkout error:", err.response?.data || err.message);
 		}
 	};
 

@@ -5,10 +5,11 @@ import { stripe } from "../lib/stripe.js";
 // ---------------- CREATE CHECKOUT SESSION ----------------
 export const createCheckoutSession = async (req, res) => {
 	try {
-		const { products, couponCode, shippingAddress, userId } = req.body;
+		const { products, couponCode, shippingAddress } = req.body;
+		const userId = req.user._id; // Get userId from authenticated user
 
 		if (!userId) {
-			return res.status(400).json({ error: "User ID missing" });
+			return res.status(400).json({ error: "User not authenticated" });
 		}
 
 		if (!Array.isArray(products) || products.length === 0) {

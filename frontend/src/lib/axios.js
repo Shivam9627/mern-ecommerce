@@ -2,9 +2,12 @@ import axios from "axios";
 
 // Determine API base URL based on environment
 const isDev = import.meta.env.MODE === "development";
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL 
+let API_BASE_URL = import.meta.env.VITE_API_BASE_URL 
 	? import.meta.env.VITE_API_BASE_URL 
 	: (isDev ? "http://localhost:5000" : "https://mern-ecommerce-5sci.onrender.com");
+
+// Remove trailing /api if it exists (routes already have /api prefix)
+API_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, "");
 
 console.log("🔧 API Base URL:", API_BASE_URL);
 console.log("🔧 Environment:", isDev ? "Development" : "Production");
@@ -29,7 +32,7 @@ axiosInstance.interceptors.response.use(
 
 			try {
 				// Try to refresh token
-				await axiosInstance.post("/auth/refresh-token");
+				await axiosInstance.post("/api/auth/refresh-token");
 				// Retry original request
 				return axiosInstance(originalRequest);
 			} catch (refreshError) {
