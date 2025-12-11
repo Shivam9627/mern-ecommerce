@@ -6,14 +6,17 @@ let API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 	? import.meta.env.VITE_API_BASE_URL 
 	: (isDev ? "http://localhost:5000" : "https://mern-ecommerce-5sci.onrender.com");
 
-// Remove trailing /api if it exists (routes already have /api prefix)
+// Remove trailing /api if it exists (we'll add it below)
 API_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, "");
 
-console.log("🔧 API Base URL:", API_BASE_URL);
+// Set baseURL to include /api prefix
+const FULL_API_URL = `${API_BASE_URL}/api`;
+
+console.log("🔧 API Base URL:", FULL_API_URL);
 console.log("🔧 Environment:", isDev ? "Development" : "Production");
 
 const axiosInstance = axios.create({
-	baseURL: API_BASE_URL,
+	baseURL: FULL_API_URL,
 	withCredentials: true, // Important: send cookies with every request
 	headers: {
 		"Content-Type": "application/json",
@@ -32,7 +35,7 @@ axiosInstance.interceptors.response.use(
 
 			try {
 				// Try to refresh token
-				await axiosInstance.post("/api/auth/refresh-token");
+				await axiosInstance.post("/auth/refresh-token");
 				// Retry original request
 				return axiosInstance(originalRequest);
 			} catch (refreshError) {

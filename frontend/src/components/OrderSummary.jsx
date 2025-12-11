@@ -34,7 +34,7 @@ const OrderSummary = ({ shippingAddress }) => {
 				return;
 			}
 
-			const res = await axios.post("/api/payments/create-checkout-session", {
+			const res = await axios.post("/payments/create-checkout-session", {
 				products: cart,
 				couponCode: coupon ? coupon.code : null,
 				shippingAddress,
