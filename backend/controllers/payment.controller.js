@@ -6,10 +6,11 @@ import { stripe } from "../lib/stripe.js";
 export const createCheckoutSession = async (req, res) => {
 	try {
 		const { products, couponCode, shippingAddress } = req.body;
-		const userId = req.user._id; // Get userId from authenticated user
+		const userId = req.user?._id; // Get userId from authenticated user
 
 		if (!userId) {
-			return res.status(400).json({ error: "User not authenticated" });
+			console.warn("❌ Checkout attempted without authentication");
+			return res.status(401).json({ error: "User not authenticated. Please login first." });
 		}
 
 		if (!Array.isArray(products) || products.length === 0) {
@@ -75,7 +76,7 @@ export const createCheckoutSession = async (req, res) => {
 			},
 		});
 
-		console.log("Stripe session created:", session.id);
+		console.log("✅ Stripe session created:", session.id);
 
 		if (totalAmount >= 20000) {
 			await createNewCoupon(userId);
@@ -85,7 +86,7 @@ export const createCheckoutSession = async (req, res) => {
 		return res.status(200).json({ url: session.url });
 
 	} catch (error) {
-		console.error("Error creating checkout session:", error);
+		console.error("❌ Error creating checkout session:", error.message);
 		res.status(500).json({ message: "Error processing checkout", error: error.message });
 	}
 };

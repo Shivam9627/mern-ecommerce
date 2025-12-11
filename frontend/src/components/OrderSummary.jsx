@@ -1,15 +1,19 @@
 import { motion } from "framer-motion";
 import { useCartStore } from "../stores/useCartStore";
-import { Link } from "react-router-dom";
+import { useUserStore } from "../stores/useUserStore";
+import { Link, useNavigate } from "react-router-dom";
 import { MoveRight } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import axios from "../lib/axios";
+import { toast } from "react-hot-toast";
 
 const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY || "";
 const stripePromise = STRIPE_PUBLIC_KEY ? loadStripe(STRIPE_PUBLIC_KEY) : null;
 
 const OrderSummary = ({ shippingAddress }) => {
 	const { total, subtotal, coupon, isCouponApplied, cart } = useCartStore();
+	const { user } = useUserStore();
+	const navigate = useNavigate();
 
 	const savings = subtotal - total;
 	const formattedSubtotal = subtotal.toFixed(2);
@@ -17,13 +21,20 @@ const OrderSummary = ({ shippingAddress }) => {
 	const formattedSavings = savings.toFixed(2);
 
 	const handlePayment = async () => {
+		if (!user) {
+			toast.error("Please login first before checking out");
+			navigate("/login");
+			return;
+		}
+
 		if (!shippingAddress) {
-			alert("Please add a shipping address before checkout");
+			toast.error("Please add a shipping address before checkout");
 			return;
 		}
 
 		if (!STRIPE_PUBLIC_KEY) {
-			console.error("Missing Stripe publishable key. Set VITE_STRIPE_PUBLIC_KEY in frontend/.env");
+			console.error("Missing Stripe publishable key. Set VITE_STRIPE_PUBLIC_KEY in .env");
+			toast.error("Payment system not configured");
 			return;
 		}
 
@@ -31,6 +42,7 @@ const OrderSummary = ({ shippingAddress }) => {
 			const stripe = await stripePromise;
 			if (!stripe) {
 				console.error("Failed to initialize Stripe");
+				toast.error("Failed to initialize payment system");
 				return;
 			}
 
@@ -42,6 +54,7 @@ const OrderSummary = ({ shippingAddress }) => {
 
 			if (!res || !res.data || !res.data.url) {
 				console.error("Invalid checkout session response", res);
+				toast.error("Failed to create checkout session");
 				return;
 			}
 
@@ -49,6 +62,8 @@ const OrderSummary = ({ shippingAddress }) => {
 			window.location.href = res.data.url;
 		} catch (err) {
 			console.error("Checkout error:", err.response?.data || err.message);
+			const errorMsg = err.response?.data?.error || err.response?.data?.message || "Payment failed";
+			toast.error(errorMsg);
 		}
 	};
 
@@ -87,16 +102,19 @@ const OrderSummary = ({ shippingAddress }) => {
 					</dl>
 				</div>
 
-				<motion.button
-					className='flex w-full items-center justify-center rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-300'
-					whileHover={{ scale: 1.05 }}
-					whileTap={{ scale: 0.95 }}
-					onClick={handlePayment}
-				>
-					Proceed to Checkout
-				</motion.button>
-
-				<div className='flex items-center justify-center gap-2'>
+			<motion.button
+				className={`flex w-full items-center justify-center rounded-lg px-5 py-2.5 text-sm font-medium text-white focus:outline-none focus:ring-4 ${
+					user && shippingAddress
+						? "bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-300"
+						: "bg-gray-600 cursor-not-allowed"
+				}`}
+				whileHover={user && shippingAddress ? { scale: 1.05 } : {}}
+				whileTap={user && shippingAddress ? { scale: 0.95 } : {}}
+				onClick={handlePayment}
+				disabled={!user || !shippingAddress}
+			>
+				{!user ? "Login to Checkout" : !shippingAddress ? "Add Address to Checkout" : "Proceed to Checkout"}
+			</motion.button>				<div className='flex items-center justify-center gap-2'>
 					<span className='text-sm font-normal text-gray-400'>or</span>
 					<Link
 						to='/'
