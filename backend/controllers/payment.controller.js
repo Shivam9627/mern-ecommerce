@@ -128,6 +128,8 @@ export const checkoutSuccess = async (req, res) => {
 			totalAmount: session.amount_total / 100,
 			stripeSessionId: sessionId,
 			shippingAddress,
+			paymentMethod: "card",
+			paymentStatus: "paid",
 		});
 
 		await newOrder.save();
@@ -141,6 +143,61 @@ export const checkoutSuccess = async (req, res) => {
 		console.error("Error in checkoutSuccess:", error);
 		res.status(500).json({ message: "Error processing successful checkout", error: error.message });
 	}
+};
+
+// ---------------- CASH ON DELIVERY ORDER ----------------
+export const createCodOrder = async (req, res) => {
+    try {
+        const { products, couponCode, shippingAddress } = req.body;
+        const userId = req.user?._id;
+
+        if (!userId) {
+            return res.status(401).json({ error: "User not authenticated. Please login first." });
+        }
+
+        if (!Array.isArray(products) || products.length === 0) {
+            return res.status(400).json({ error: "Invalid or empty products array" });
+        }
+
+        let totalAmount = 0;
+        products.forEach((p) => {
+            const amount = Math.round(p.price * 100);
+            totalAmount += amount * (p.quantity || 1);
+        });
+
+        if (couponCode) {
+            const coupon = await Coupon.findOne({ code: couponCode, userId, isActive: true });
+            if (coupon) {
+                totalAmount -= Math.round((totalAmount * coupon.discountPercentage) / 100);
+                await Coupon.findOneAndUpdate({ code: couponCode, userId }, { isActive: false });
+            }
+        }
+
+        const order = new Order({
+            user: userId,
+            products: products.map((product) => ({
+                product: product._id,
+                quantity: product.quantity || 1,
+                price: product.price,
+            })),
+            totalAmount: Math.round(totalAmount / 100),
+            shippingAddress: shippingAddress || null,
+            paymentMethod: "cod",
+            paymentStatus: "pending",
+            status: "pending",
+        });
+
+        await order.save();
+
+        if (totalAmount >= 20000) {
+            await createNewCoupon(userId);
+        }
+
+        return res.status(200).json({ success: true, orderId: order._id });
+    } catch (error) {
+        console.error("❌ Error creating COD order:", error.message);
+        res.status(500).json({ message: "Error creating COD order", error: error.message });
+    }
 };
 
 // ---------------- HELPERS ----------------

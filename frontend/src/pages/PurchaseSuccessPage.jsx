@@ -24,9 +24,20 @@ const PurchaseSuccessPage = () => {
 			}
 		};
 
-		const sessionId = new URLSearchParams(window.location.search).get("session_id");
+		const params = new URLSearchParams(window.location.search);
+		const sessionId = params.get("session_id");
+		const isCod = params.get("cod") === "true";
+
 		if (sessionId) {
 			handleCheckoutSuccess(sessionId);
+		} else if (isCod) {
+			(async () => {
+				try {
+					await clearCart();
+				} finally {
+					setIsProcessing(false);
+				}
+			})();
 		} else {
 			setIsProcessing(false);
 			setError("No session ID found in the URL");

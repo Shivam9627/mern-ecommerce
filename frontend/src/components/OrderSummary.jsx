@@ -67,6 +67,38 @@ const OrderSummary = ({ shippingAddress }) => {
 		}
 	};
 
+	const handleCodOrder = async () => {
+		if (!user) {
+			toast.error("Please login first before checking out");
+			navigate("/login");
+			return;
+		}
+
+		if (!shippingAddress) {
+			toast.error("Please add a shipping address before checkout");
+			return;
+		}
+
+		try {
+			const res = await axios.post("/payments/create-cod-order", {
+				products: cart,
+				couponCode: coupon ? coupon.code : null,
+				shippingAddress,
+			});
+
+			if (!res || !res.data || !res.data.success) {
+				toast.error("Failed to place COD order");
+				return;
+			}
+
+			navigate("/purchase-success?cod=true");
+		} catch (err) {
+			console.error("COD checkout error:", err.response?.data || err.message);
+			const errorMsg = err.response?.data?.error || err.response?.data?.message || "COD order failed";
+			toast.error(errorMsg);
+		}
+	};
+
 	return (
 		<motion.div
 			className='space-y-4 rounded-lg border border-gray-700 bg-gray-800 p-4 shadow-sm sm:p-6'
@@ -114,7 +146,23 @@ const OrderSummary = ({ shippingAddress }) => {
 				disabled={!user || !shippingAddress}
 			>
 				{!user ? "Login to Checkout" : !shippingAddress ? "Add Address to Checkout" : "Proceed to Checkout"}
-			</motion.button>				<div className='flex items-center justify-center gap-2'>
+			</motion.button>
+
+			<motion.button
+				className={`mt-2 flex w-full items-center justify-center rounded-lg px-5 py-2.5 text-sm font-medium text-white focus:outline-none focus:ring-4 ${
+					user && shippingAddress
+						? "bg-gray-700 hover:bg-gray-600 focus:ring-gray-500"
+						: "bg-gray-600 cursor-not-allowed"
+				}`}
+				whileHover={user && shippingAddress ? { scale: 1.05 } : {}}
+				whileTap={user && shippingAddress ? { scale: 0.95 } : {}}
+				onClick={handleCodOrder}
+				disabled={!user || !shippingAddress}
+			>
+				Cash on Delivery
+			</motion.button>
+
+				<div className='flex items-center justify-center gap-2'>
 					<span className='text-sm font-normal text-gray-400'>or</span>
 					<Link
 						to='/'

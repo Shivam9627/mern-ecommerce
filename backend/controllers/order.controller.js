@@ -29,23 +29,30 @@ export const getAllOrders = async (req, res) => {
 };
 
 export const updateOrderStatus = async (req, res) => {
-	try {
-		const { orderId } = req.params;
-		const { status } = req.body;
+    try {
+        const { orderId } = req.params;
+        const { status } = req.body;
 
-		if (!["pending", "shipped", "on-the-way", "delivered"].includes(status)) {
-			return res.status(400).json({ message: "Invalid status" });
-		}
+        if (!["pending", "shipped", "on-the-way", "delivered"].includes(status)) {
+            return res.status(400).json({ message: "Invalid status" });
+        }
 
-		const order = await Order.findByIdAndUpdate(
-			orderId,
-			{ status },
-			{ new: true }
-		).populate("products.product", "name price image");
+        const order = await Order.findById(orderId).populate("products.product", "name price image");
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
 
-		res.json(order);
-	} catch (error) {
-		console.error("Error updating order status:", error);
-		res.status(500).json({ message: "Failed to update order", error: error.message });
-	}
+        order.status = status;
+
+        if (status === "delivered" && order.paymentMethod === "cod" && order.paymentStatus !== "paid") {
+            order.paymentStatus = "paid";
+        }
+
+        await order.save();
+
+        res.json(order);
+    } catch (error) {
+        console.error("Error updating order status:", error);
+        res.status(500).json({ message: "Failed to update order", error: error.message });
+    }
 };

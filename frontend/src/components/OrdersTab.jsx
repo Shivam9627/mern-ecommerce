@@ -72,6 +72,12 @@ const OrdersTab = () => {
                       <p className="text-white font-semibold">${order.totalAmount.toFixed(2)}</p>
                     </div>
                     <div>
+                      <p className="text-sm text-gray-400">Payment</p>
+                      <p className="text-white">
+                        {(order.paymentMethod || "card").toUpperCase()} • {(order.paymentStatus || "paid").toUpperCase()}
+                      </p>
+                    </div>
+                    <div>
                       <p className="text-sm text-gray-400">Status</p>
                       <select
                         value={order.status}

@@ -7,6 +7,7 @@ export const getAnalyticsData = async () => {
 	const totalProducts = await Product.countDocuments();
 
 	const salesData = await Order.aggregate([
+		{ $match: { paymentStatus: "paid" } },
 		{
 			$group: {
 				_id: null, // it groups all documents together,
@@ -31,6 +32,7 @@ export const getDailySalesData = async (startDate, endDate) => {
 		const dailySalesData = await Order.aggregate([
 			{
 				$match: {
+					paymentStatus: "paid",
 					createdAt: {
 						$gte: startDate,
 						$lte: endDate,
