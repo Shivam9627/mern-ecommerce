@@ -23,9 +23,10 @@ const PORT = process.env.PORT || 5000;
 // Allowed frontend domains
 // ---------------------------------------------------------------------------
 const allowedOrigins = [
-    "http://localhost:5173", // local dev
-    "https://mern-ecommerce-frontend-gg0c7lu19-shivam-chamolis-projects.vercel.app", // your vercel frontend
-    process.env.CLIENT_URL // optional: allow render env variable
+    "http://localhost:5173",
+    "https://mern-ecommerce-frontend-gg0c7lu19-shivam-chamolis-projects.vercel.app",
+    "https://mern-ecommerce-frontend-six-psi.vercel.app",
+    process.env.CLIENT_URL
 ];
 
 

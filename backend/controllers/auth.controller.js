@@ -118,14 +118,21 @@ export const logout = async (req, res) => {
 
 // Refresh access token
 export const refreshToken = async (req, res) => {
-	try {
-		const refreshToken = req.cookies.refreshToken;
-		if (!refreshToken) return res.status(401).json({ message: "No refresh token provided" });
+    try {
+        const refreshToken = req.cookies.refreshToken;
+        if (!refreshToken) return res.status(401).json({ message: "No refresh token provided" });
 
-		const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-		const storedToken = await redis.get(`refresh_token:${decoded.userId}`);
+        const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+        let storedToken = null;
+        try {
+            storedToken = await redis.get(`refresh_token:${decoded.userId}`);
+        } catch (e) {
+            console.warn("Refresh token store unavailable, proceeding without Redis validation");
+        }
 
-		if (storedToken !== refreshToken) return res.status(401).json({ message: "Invalid refresh token" });
+        if (storedToken && storedToken !== refreshToken) {
+            return res.status(401).json({ message: "Invalid refresh token" });
+        }
 
 		const accessToken = jwt.sign({ userId: decoded.userId }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "15m" });
 
