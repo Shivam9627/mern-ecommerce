@@ -45,7 +45,7 @@ export const createCheckoutSession = async (req, res) => {
 			}
 		}
 
-		const session = await stripe.checkout.sessions.create({
+        const session = await stripe.checkout.sessions.create({
 			payment_method_types: ["card"],
 			line_items: lineItems,
 			mode: "payment",
@@ -62,19 +62,19 @@ export const createCheckoutSession = async (req, res) => {
 				  ]
 				: [],
 
-			metadata: {
-				userId,
-				couponCode: couponCode || "",
-				products: JSON.stringify(
-					products.map((p) => ({
-						id: p._id,
-						quantity: p.quantity,
-						price: p.price,
-					}))
-				),
-				shippingAddress: JSON.stringify(shippingAddress || {}),
-			},
-		});
+            metadata: {
+                userId: String(userId),
+                couponCode: couponCode ? String(couponCode) : "",
+                products: JSON.stringify(
+                    products.map((p) => ({
+                        id: String(p._id),
+                        quantity: Number(p.quantity || 1),
+                        price: Number(p.price),
+                    }))
+                ),
+                shippingAddress: JSON.stringify(shippingAddress || {}),
+            },
+        });
 
 		console.log("✅ Stripe session created:", session.id);
 
