@@ -23,30 +23,40 @@ const axiosInstance = axios.create({
 	},
 });
 
-// Add response interceptor to handle token refresh
 axiosInstance.interceptors.response.use(
-	(response) => response,
-	async (error) => {
-		const originalRequest = error.config;
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config || {};
+        const status = error.response?.status;
+        const url = originalRequest.url || "";
 
-		// If 401 and not already retried
-		if (error.response?.status === 401 && !originalRequest._retry) {
-			originalRequest._retry = true;
+        if (status !== 401) {
+            return Promise.reject(error);
+        }
 
-			try {
-				// Try to refresh token
-				await axiosInstance.post("/auth/refresh-token");
-				// Retry original request
-				return axiosInstance(originalRequest);
-			} catch (refreshError) {
-				console.error("Token refresh failed:", refreshError);
-				// Token refresh failed, user needs to login again
-				return Promise.reject(refreshError);
-			}
-		}
+        if (originalRequest._retry) {
+            return Promise.reject(error);
+        }
 
-		return Promise.reject(error);
-	}
+        if (
+            url.includes("/auth/refresh-token") ||
+            url.includes("/auth/login") ||
+            url.includes("/auth/signup")
+        ) {
+            return Promise.reject(error);
+        }
+
+        originalRequest._retry = true;
+
+        try {
+            await axiosInstance.post("/auth/refresh-token");
+            return axiosInstance(originalRequest);
+        } catch (refreshError) {
+            return Promise.reject(
+                refreshError?.response?.data?.message ? new Error(refreshError.response.data.message) : refreshError
+            );
+        }
+    }
 );
 
 export default axiosInstance;
