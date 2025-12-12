@@ -26,6 +26,7 @@ const allowedOrigins = [
     "http://localhost:5173",
     "https://mern-ecommerce-frontend-gg0c7lu19-shivam-chamolis-projects.vercel.app",
     "https://mern-ecommerce-frontend-six-psi.vercel.app",
+    "https://mern-ecommerce-frontend-3l43kzc73-shivam-chamolis-projects.vercel.app",
     process.env.CLIENT_URL
 ];
 

@@ -1,0 +1,11 @@
+{
+  "rewrites": [
+    { "source": "/purchase-success", "destination": "/" },
+    { "source": "/purchase-cancel", "destination": "/" },
+    { "source": "/my-orders", "destination": "/" },
+    { "source": "/secret-dashboard", "destination": "/" },
+    { "source": "/category/:path*", "destination": "/" },
+    { "source": "/cart", "destination": "/" },
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}
